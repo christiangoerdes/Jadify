@@ -5,7 +5,7 @@ import com.sun.source.util.DocTrees;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.TreeScanner;
-import io.jadify.core.config.JadifyConfig;
+import io.jadify.core.config.Config;
 import io.jadify.core.model.ElementKind;
 import io.jadify.core.model.ElementRef;
 
@@ -25,7 +25,7 @@ import static javax.lang.model.element.Modifier.PROTECTED;
 public class JavaAstScanner  implements Scanner {
 
     @Override
-    public ScanContext scan(Path projectRoot, JadifyConfig config) throws IOException {
+    public ScanContext scan(Path projectRoot, Config config) throws IOException {
         List<File> javaFiles = findJavaFiles(projectRoot);
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -86,13 +86,13 @@ public class JavaAstScanner  implements Scanner {
         }
     }
 
-    private static boolean isInScope(ModifiersTree modifiers, JadifyConfig.Scope scope) {
+    private static boolean isInScope(ModifiersTree modifiers, Config.Scope scope) {
         var flags = modifiers.getFlags();
         return (scope.includePublic() && flags.contains(PUBLIC))
                 || (scope.includeProtected() && flags.contains(PROTECTED));
     }
 
-    private static boolean isSuppressed(ModifiersTree modifiers, JadifyConfig config) {
+    private static boolean isSuppressed(ModifiersTree modifiers, Config config) {
         var anns = modifiers.getAnnotations().stream()
                 .map(a -> a.getAnnotationType().toString())
                 .toList();

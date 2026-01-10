@@ -1,50 +1,60 @@
 package io.jadify.core.config;
 
+import com.networknt.schema.*;
 import com.networknt.schema.Error;
-import com.networknt.schema.InputFormat;
-import com.networknt.schema.Schema;
-import com.networknt.schema.SchemaRegistry;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static com.networknt.schema.SchemaLocation.of;
+import static com.networknt.schema.SchemaRegistry.withDefaultDialect;
 import static com.networknt.schema.SpecificationVersion.DRAFT_2020_12;
+import static io.jadify.core.config.ConfigDefaults.DEFAULT;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.readString;
 
 public final class ConfigLoader {
 
-    private static final YAMLMapper YAML = new YAMLMapper();
+    private static final YAMLMapper YAML = YAMLMapper.builder().build();
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
-    private static final Schema SCHEMA = loadSchemaFromClasspath();
+    private static final SchemaRegistry REGISTRY = withDefaultDialect(DRAFT_2020_12);
 
-    public static JadifyConfig load(Path yamlFile) throws Exception {
-        JsonNode node = YAML.readTree(Files.readString(yamlFile, UTF_8));
+    private static final Schema SCHEMA = REGISTRY.getSchema(of("classpath:jadify-schema/jadify-config.schema.json"));
 
-        List<Error> errors = SCHEMA.validate(JSON.writeValueAsString(node), InputFormat.JSON);
+    public static Config load(Path yamlFile) throws Exception {
+        return load(yamlFile, DEFAULT);
+    }
+
+    public static Config load(Path yamlFile, Config defaultConfig) throws Exception {
+        ObjectNode defaults = JSON.valueToTree(defaultConfig);
+        deepMerge(defaults, YAML.readTree(readString(yamlFile, UTF_8)));
+
+        List<Error> errors = SCHEMA.validate(JSON.writeValueAsString(defaults), InputFormat.JSON, ctx -> {});
         if (!errors.isEmpty()) throw new ConfigValidationException(errors);
 
-        return YAML.treeToValue(node, JadifyConfig.class);
+        return JSON.treeToValue(defaults, Config.class);
     }
 
-    private static Schema loadSchemaFromClasspath() {
-        String resource = "/jadify-schema/jadify-config.schema.json";
+    private static void deepMerge(ObjectNode base, JsonNode override) {
+        if (override == null || override.isNull() || !override.isObject()) return;
 
-        try (InputStream is = ConfigLoader.class.getResourceAsStream(resource)) {
-            if (is == null) throw new IllegalStateException("Missing schema resource: " + resource);
+        override.properties().iterator().forEachRemaining(e -> {
+            String key = e.getKey();
+            JsonNode oVal = e.getValue();
+            JsonNode bVal = base.get(key);
 
-            return SchemaRegistry.withDefaultDialect(DRAFT_2020_12).getSchema(new String(is.readAllBytes(), UTF_8), InputFormat.JSON);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to load/compile schema from classpath", e);
-        }
+            if (bVal != null && bVal.isObject() && oVal != null && oVal.isObject()) {
+                deepMerge((ObjectNode) bVal, oVal);
+            } else {
+                base.set(key, oVal);
+            }
+        });
     }
-
-    private ConfigLoader() {}
 
     public static final class ConfigValidationException extends IllegalArgumentException {
         private final List<Error> errors;
@@ -58,13 +68,10 @@ public final class ConfigLoader {
 
         private static String format(List<Error> errors) {
             StringBuilder sb = new StringBuilder("Config does not match schema:\n");
-            for (Error e : errors) {
-                sb.append("- ")
-                        .append(e.getInstanceLocation()).append(" ")
-                        .append(e.getKeyword()).append(": ")
-                        .append(e.getMessage()).append("\n");
-            }
+            for (Error e : errors) sb.append("- ").append(e).append('\n');
             return sb.toString();
         }
     }
+
+    private ConfigLoader() {}
 }

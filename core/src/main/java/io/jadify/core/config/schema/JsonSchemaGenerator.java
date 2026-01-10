@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.jadify.core.config.JadifyConfig;
+import io.jadify.core.config.Config;
 
 public class JsonSchemaGenerator {
 
@@ -29,7 +29,7 @@ public class JsonSchemaGenerator {
     }
 
     public static ObjectNode generateSchema() {
-        return new Generator().generate(JadifyConfig.class);
+        return new Generator().generate(Config.class);
     }
 
     private static final class Generator {

@@ -1,6 +1,6 @@
 package io.jadify.core;
 
-import io.jadify.core.config.JadifyConfig;
+import io.jadify.core.config.Config;
 import io.jadify.core.model.Issue;
 import io.jadify.core.rules.Rule;
 import io.jadify.core.scan.Scanner;
@@ -19,12 +19,12 @@ public final class JadifyRunner {
         this.rules = rules;
     }
 
-    public List<Issue> run(Path projectRoot, JadifyConfig config) throws Exception {
+    public List<Issue> run(Path projectRoot, Config config) throws Exception {
         var ctx = scanner.scan(projectRoot, config);
 
         var enabled = config.rules().stream()
-                .filter(JadifyConfig.RuleToggle::enabled)
-                .map(JadifyConfig.RuleToggle::id)
+                .filter(Config.RuleToggle::enabled)
+                .map(Config.RuleToggle::id)
                 .collect(java.util.stream.Collectors.toSet());
 
         List<Issue> all = new ArrayList<>();

@@ -4,7 +4,7 @@ import io.jadify.core.model.Severity;
 
 import java.util.List;
 
-public record JadifyConfig(
+public record Config(
         String projectRoot,
         List<String> includePackages,
         List<String> excludePackages,
