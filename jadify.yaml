@@ -1,0 +1,19 @@
+projectRoot: "src/main/java"
+includePackages:
+  - "**"
+excludePackages:
+  - "**.internal.**"
+
+suppressAnnotations:
+  - "NoDoc"
+
+scope:
+  includePublic: true
+  includeProtected: false
+
+rules:
+  - id: "public-javadoc-presence"
+    enabled: true
+
+failOn:
+  severity: "ERROR"
