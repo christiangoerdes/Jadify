@@ -5,10 +5,12 @@ A configurable CLI/CI tool to enforce Javadoc coverage for public Java APIs.
 ### TODOS
 - 1 **Configuration/Parsing**: 
   - [x] Implement JsonSchema generation
-  - [ ] Add schema validation 
-  - [ ] Catch parsing errors
-  - [ ] Add custom exceptions
-- 2 **Documentation**:
+  - [x] Add schema validation
+  - [ ] Add default config (checking default javadoc annotations)
+- 2 **Test/Demo**:
+  - [ ] Implement starter
+  - [ ] Add Tests
+- 3 **Documentation**:
   - [ ] Generate configuration documentation
-- 3 **CLI**:
+- 4 **CLI**:
   - [ ] Implement and document CLI usage

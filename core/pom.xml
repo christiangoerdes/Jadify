@@ -15,7 +15,7 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jadify.schema.outDir>${project.build.directory}/generated-schemas</jadify.schema.outDir>
+        <jadify.schema.outDir>${project.build.outputDirectory}/jadify-schema</jadify.schema.outDir>
         <jadify.schema.file>jadify-config.schema.json</jadify.schema.file>
     </properties>
 
@@ -30,6 +30,11 @@
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>3.0.3</version>
         </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>3.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -42,13 +47,10 @@
                     <execution>
                         <id>generate-jsonschema</id>
                         <phase>process-classes</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
+                        <goals><goal>java</goal></goals>
                         <configuration>
                             <mainClass>io.jadify.core.config.schema.JsonSchemaGenerator</mainClass>
                             <classpathScope>runtime</classpathScope>
-                            <skip>${exec.skip}</skip>
                             <arguments>
                                 <argument>${jadify.schema.outDir}</argument>
                                 <argument>${jadify.schema.file}</argument>
