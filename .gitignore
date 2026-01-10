@@ -1,0 +1,6 @@
+/.idea/
+/core/target/
+/cli/target/cli-0.1.0-SNAPSHOT.jar
+/cli/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+/cli/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst
+/cli/target/maven-archiver/pom.properties
