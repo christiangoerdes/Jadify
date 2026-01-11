@@ -6,7 +6,9 @@ A configurable CLI/CI tool to enforce Javadoc coverage for public Java APIs.
 - 1 **Configuration/Parsing**: 
   - [x] Implement JsonSchema generation
   - [x] Add schema validation
-  - [ ] Add default config (checking default javadoc annotations)
+  - [x] Add default config (checking default javadoc annotations)
+  - [ ] Implement default javadoc rules
+  - [ ] Add better handling for rule configuration and rule parsing errors
 - 2 **Test/Demo**:
   - [ ] Implement starter
   - [ ] Add Tests
@@ -14,3 +16,5 @@ A configurable CLI/CI tool to enforce Javadoc coverage for public Java APIs.
   - [ ] Generate configuration documentation
 - 4 **CLI**:
   - [ ] Implement and document CLI usage
+- 5 **Output**:
+  - [ ] Implement different report output formats

@@ -1,19 +1,52 @@
-projectRoot: "src/main/java"
-includePackages:
-  - "**"
-excludePackages:
-  - "**.internal.**"
-
-suppressAnnotations:
-  - "NoDoc"
-
-scope:
-  includePublic: true
-  includeProtected: false
-
+# Configuration ideas
 rules:
-  - id: "public-javadoc-presence"
+  - id: "javadoc.presence"
     enabled: true
+    when:
+      targets: ["TYPE", "METHOD", "CONSTRUCTOR"]
+      visibility: ["PUBLIC", "PROTECTED"]
+    config:
+      allowInherited: true
 
-failOn:
-  severity: "ERROR"
+  # First sentence / summary style (helps "standard javadoc")
+  - id: "javadoc.summary"
+    enabled: true
+    when:
+      targets: [TYPE, METHOD]
+      visibility: [PUBLIC, PROTECTED]
+    config:
+      requireSummarySentence: true
+      maxSummaryLength: 140
+      requirePeriod: true
+
+  # Custom "Javadoc annotations" / inline tags control (e.g. @description)
+  # Treat these as "required tags" depending on target/kind.
+  - id: "javadoc.customTags"
+    enabled: true
+    when:
+      targets: [TYPE, METHOD]
+      visibility: [PUBLIC, PROTECTED]
+    config:
+      tags:
+        - name: "description"     # accepts @description or {@description ...} depending on implementation
+          requiredOn:
+            targets: [TYPE]       # require for public/protected types
+        - name: "apiNote"
+          requiredOn:
+            targets: [METHOD]
+            # only require on methods that are public API *and* not getters/setters
+            excludeAccessorKinds: [GETTER, SETTER, BOOLEAN_GETTER]
+      allowMultiple: false
+
+  # Accessor-specific rules
+  - id: "accessors.policy"
+    enabled: true
+    when:
+      targets: [METHOD]
+      accessorKinds: [GETTER, SETTER, BOOLEAN_GETTER]
+      visibility: [PUBLIC, PROTECTED]
+    severity: INFO
+    config:
+      getterNameRegex: "^(get|is)[A-Z].*$"
+      setterNameRegex: "^set[A-Z].*$"
+      requirePropertyMentionInJavadoc: false

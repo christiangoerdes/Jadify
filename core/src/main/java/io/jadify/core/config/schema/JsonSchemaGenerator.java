@@ -63,7 +63,9 @@ public class JsonSchemaGenerator {
                         n.set("items", schemaFor(pt.getActualTypeArguments()[0]));
                         return n;
                     }
-                    // fall back to raw type
+                    if (Map.class.isAssignableFrom(rawCls)) {
+                        return mapSchema(pt.getActualTypeArguments()[0], pt.getActualTypeArguments()[1]);
+                    }
                     return schemaForClass(rawCls);
                 }
             }
@@ -87,16 +89,26 @@ public class JsonSchemaGenerator {
                 ObjectNode n = MAPPER.createObjectNode();
                 n.put("type", "string");
                 ArrayNode e = MAPPER.createArrayNode();
-                for (Object c : cls.getEnumConstants()) {
-                    e.add(((Enum<?>) c).name());
-                }
+                for (Object c : cls.getEnumConstants()) e.add(((Enum<?>) c).name());
                 n.set("enum", e);
                 return n;
             }
+
+            if (JsonNode.class.isAssignableFrom(cls)) {
+                return MAPPER.createObjectNode();
+            }
+
             if (isString(cls)) return typeNode("string");
             if (isBoolean(cls)) return typeNode("boolean");
             if (isInteger(cls)) return typeNode("integer");
             if (isNumber(cls)) return typeNode("number");
+
+            if (Map.class.isAssignableFrom(cls)) {
+                ObjectNode n = MAPPER.createObjectNode();
+                n.put("type", "object");
+                n.set("additionalProperties", MAPPER.createObjectNode());
+                return n;
+            }
 
             if (cls.isRecord()) {
                 ensureDefinition(cls);
@@ -105,7 +117,7 @@ public class JsonSchemaGenerator {
                 return ref;
             }
 
-            throw new IllegalArgumentException("Unsupported class (only record/enum/primitives/List supported): " + cls.getName());
+            throw new IllegalArgumentException("Unsupported class (only record/enum/primitives/List/Map/JsonNode supported): " + cls.getName());
         }
 
         private void ensureDefinition(Class<?> recordType) {
@@ -127,9 +139,42 @@ public class JsonSchemaGenerator {
             }
 
             def.set("properties", props);
-            def.set("required", required);
 
             defs.put(name, def);
+        }
+
+        private JsonNode mapSchema(Type keyType, Type valueType) {
+            if (keyType instanceof Class<?> k && k.isEnum()) {
+                ObjectNode n = MAPPER.createObjectNode();
+                n.put("type", "object");
+                n.put("additionalProperties", false);
+
+                ObjectNode props = MAPPER.createObjectNode();
+                ArrayNode req = MAPPER.createArrayNode();
+
+                for (Object c : k.getEnumConstants()) {
+                    String key = ((Enum<?>) c).name();
+                    props.set(key, schemaFor(valueType));
+                    req.add(key);
+                }
+
+                n.set("properties", props);
+                return n;
+            }
+
+            if (keyType instanceof Class<?> k && isString(k)) {
+                ObjectNode n = MAPPER.createObjectNode();
+                n.put("type", "object");
+                n.set("additionalProperties", schemaFor(valueType));
+
+                ObjectNode pn = MAPPER.createObjectNode();
+                pn.put("type", "string");
+                n.set("propertyNames", pn);
+
+                return n;
+            }
+
+            throw new IllegalArgumentException("Unsupported Map key type (need enum or string): " + keyType);
         }
 
         private static ObjectNode typeNode(String t) {

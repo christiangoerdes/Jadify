@@ -1,0 +1,108 @@
+# Defaults for typical Java projects with standard Javadoc.
+projectRoot: "src/main/java"
+
+failOn:
+  severity: ERROR
+
+scan:
+  packages:
+    # regex: empty include => match all
+    include: []
+    # ignore common non-source / generated / internal locations
+    exclude:
+      - "^.*\\.(generated|gen)(\\..*)?$"
+      - "^.*\\.(internal|impl)(\\..*)?$"
+      - "^.*\\.(test|tests)(\\..*)?$"
+  types:
+    include:
+      classes: true
+      interfaces: true
+      records: true
+      enums: true
+      annotations: false
+      exceptions: true
+    names:
+      include: []
+      exclude:
+        - ".*Test$"
+        - ".*IT$"
+        - ".*ITCase$"
+        - ".*TestCase$"
+        - ".*\\$\\$.*"          # proxies / generated inner artifacts
+    annotations:
+      include: []
+      exclude:
+        - "^(javax|jakarta)\\.annotation\\.Generated$"
+        - "^lombok\\.Generated$"
+        - "^org\\.jetbrains\\.annotations\\.Generated$"
+  members:
+    include:
+      fields: false
+      methods: true
+      constructors: true
+      getters: true
+      setters: true
+      recordComponents: true
+    names:
+      include: []
+      exclude: []
+    annotations:
+      include: []
+      exclude:
+        - "^(javax|jakarta)\\.annotation\\.Generated$"
+        - "^lombok\\.Generated$"
+        - "^org\\.jetbrains\\.annotations\\.Generated$"
+    includeInherited: false
+
+defaults:
+  severity:
+    byVisibility:
+      PUBLIC: ERROR
+      PROTECTED: WARN
+      PACKAGE: INFO
+      PRIVATE: OFF
+    overrides:
+      # treat accessors slightly softer than "real" API methods
+      - match:
+          targets: [METHOD]
+          accessorKinds: [GETTER, SETTER, BOOLEAN_GETTER]
+        severity: INFO
+      # package-private constructors are often intentional; keep them informational
+      - match:
+          targets: [CONSTRUCTOR]
+          visibility: [PACKAGE]
+        severity: INFO
+
+  annotationPolicies:
+    # suppress findings on generated code
+    - annotationPattern: "^(javax|jakarta)\\.annotation\\.Generated$|^lombok\\.Generated$|^org\\.jetbrains\\.annotations\\.Generated$"
+      targets: [TYPE, METHOD, CONSTRUCTOR, FIELD, RECORD_COMPONENT]
+      effect: SUPPRESS
+
+rules:
+  # 1) Javadoc must exist for public/protected types + methods + constructors
+  - id: "javadoc.presence"
+    enabled: true
+    when:
+      targets: [TYPE, METHOD, CONSTRUCTOR]
+      visibility: [PUBLIC, PROTECTED]
+    config:
+      allowInherited: true
+      ignore:
+        # common "should not require javadoc" patterns
+        simpleNamePatterns:
+          - ".*Builder$"
+          - ".*Exception$"
+          - ".*Record$"
+
+  # 2) Standard tags required where applicable
+  - id: "javadoc.tags"
+    enabled: true
+    when:
+      targets: [METHOD, CONSTRUCTOR]
+      visibility: [PUBLIC, PROTECTED]
+    config:
+      requireParamTags: true
+      requireReturnTag: true        # only if return type != void
+      requireThrowsTags: true       # only if method/ctor declares throws
+      allowMissingReturnOnBooleanGetters: true

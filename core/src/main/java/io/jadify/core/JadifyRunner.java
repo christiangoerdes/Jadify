@@ -22,17 +22,6 @@ public final class JadifyRunner {
     public List<Issue> run(Path projectRoot, Config config) throws Exception {
         var ctx = scanner.scan(projectRoot, config);
 
-        var enabled = config.rules().stream()
-                .filter(Config.RuleToggle::enabled)
-                .map(Config.RuleToggle::id)
-                .collect(java.util.stream.Collectors.toSet());
-
-        List<Issue> all = new ArrayList<>();
-        for (var r : rules) {
-            if (enabled.contains(r.getName())) {
-                all.addAll(r.evaluate(ctx));
-            }
-        }
-        return all;
+        return null; // TODO
     }
 }
