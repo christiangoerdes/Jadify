@@ -18,3 +18,7 @@ A configurable CLI/CI tool to enforce Javadoc coverage for public Java APIs.
   - [ ] Implement and document CLI usage
 - 5 **Output**:
   - [ ] Implement different report output formats
+ 
+---
+### Ideas
+- Check for e.g. xml in Javadoc
