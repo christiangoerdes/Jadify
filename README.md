@@ -2,6 +2,15 @@
 
 A configurable CLI/CI tool to enforce Javadoc coverage for public Java APIs.
 
+## Architecture (layers)
+- config: YAML/schema → Config (pure data)
+- compile: Config → CompiledConfig (precompiled selectors/regex)
+- scan: source → ScanContext (elements + doc comments)
+- rules: ScanContext + CompiledConfig → Issues
+- engine: pipeline orchestration
+- cli: user interface & output formatting
+
+
 ### TODOS
 - 1 **Configuration/Parsing**: 
   - [x] Implement JsonSchema generation
