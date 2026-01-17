@@ -18,6 +18,9 @@ import static com.networknt.schema.SpecificationVersion.DRAFT_2020_12;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.readString;
 
+/**
+ * Loads YAML configuration with defaults and validates against the JSON schema.
+ */
 public final class ConfigLoader {
 
     private static final String DEFAULT_YAML_RESOURCE = "/jadify-config.default.yaml";
