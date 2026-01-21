@@ -4,7 +4,7 @@ import io.jadify.core.JadifyRunner;
 import io.jadify.core.config.ConfigLoader;
 import io.jadify.core.model.Severity;
 import io.jadify.core.rules.PublicJavadocPresenceRule;
-import io.jadify.core.scan.JavaAstScanner;
+import io.jadify.core.scan.JavaSourceScanner;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -25,7 +25,7 @@ public final class ScanCommand implements Runnable {
             var config = ConfigLoader.load(configFile);
 
             var runner = new JadifyRunner(
-                    new JavaAstScanner(),
+                    new JavaSourceScanner(),
                     List.of(new PublicJavadocPresenceRule())
             );
 
