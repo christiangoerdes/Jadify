@@ -19,7 +19,7 @@ A configurable CLI/CI tool to enforce Javadoc coverage for public Java APIs.
   - [ ] Implement default javadoc rules
   - [ ] Add better handling for rule configuration and rule parsing errors
 - 2 **Test/Demo**:
-  - [ ] Implement starter
+  - [x] Implement starter
   - [ ] Add Tests
 - 3 **Documentation**:
   - [ ] Generate configuration documentation
