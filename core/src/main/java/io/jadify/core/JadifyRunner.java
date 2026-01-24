@@ -21,7 +21,10 @@ public final class JadifyRunner {
 
     public List<Issue> run(Path projectRoot, Config config) throws Exception {
         var ctx = scanner.scan(projectRoot, config);
-
-        return null; // TODO
+        var issues = new ArrayList<Issue>();
+        for (Rule rule : rules) {
+            issues.addAll(rule.evaluate(ctx));
+        }
+        return issues;
     }
 }
