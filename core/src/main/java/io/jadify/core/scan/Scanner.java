@@ -6,5 +6,5 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public interface Scanner {
-    ScanContext scan(Path projectRoot, Config config) throws IOException;
+    ScanContext scan(Path projectRoot, Config config);
 }

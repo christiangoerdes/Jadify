@@ -6,6 +6,7 @@ import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
 import io.jadify.core.config.Config;
+import io.jadify.core.config.exception.ConfigurationException;
 import io.jadify.core.model.ElementKind;
 import io.jadify.core.model.ElementRef;
 
@@ -17,32 +18,44 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.jadify.core.model.ElementKind.*;
+import static java.util.logging.Logger.getLogger;
+import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.*;
 import static javax.tools.ToolProvider.getSystemJavaCompiler;
 
 public class JavaSourceScanner implements Scanner {
 
+    private static final Logger log = getLogger(JavaSourceScanner.class.getName());
+
     @Override
-    public ScanContext scan(Path projectRoot, Config config) throws IOException {
-        // Resolve the configured source root relative to the project root.
-        Path sourceRoot = projectRoot.resolve(config.projectRoot());
+    public ScanContext scan(Path projectRoot, Config config) {
+        Path sourceRoot = projectRoot.resolve(config.projectRoot()).normalize();
+
+        log.info("Scanning " + sourceRoot.toAbsolutePath());
         if (!Files.exists(sourceRoot)) {
-            return new ScanContext(config, List.of(), Map.of());
+            throw new ConfigurationException("Source root %s does not exist".formatted(sourceRoot.toAbsolutePath()));
         }
 
-        List<Path> javaFiles = listJavaFiles(sourceRoot);
-        if (javaFiles.isEmpty()) {
-            return new ScanContext(config, List.of(), Map.of());
+        final List<Path> javaFiles;
+        try {
+            javaFiles = listJavaFiles(sourceRoot);
+        } catch (IOException e) {
+            throw new ConfigurationException("Failed to list Java files under " + sourceRoot.toAbsolutePath(), e);
         }
+
+        if (javaFiles.isEmpty()) {
+            throw new ConfigurationException("No Java files under %s".formatted(sourceRoot.toAbsolutePath()));
+        }
+        log.info("Found %d Java files under %s".formatted(javaFiles.size(), sourceRoot.toAbsolutePath()));
 
         JavaCompiler compiler = getSystemJavaCompiler();
         if (compiler == null) {
-            throw new IOException("No system Java compiler available (are you running on a JRE instead of a JDK?)");
+            throw new IllegalStateException("No system Java compiler available (are you running on a JRE instead of a JDK?)");
         }
 
         List<ElementRef> elements = new ArrayList<>();
@@ -51,15 +64,23 @@ public class JavaSourceScanner implements Scanner {
 
         try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
             Iterable<? extends JavaFileObject> fileObjects = fileManager.getJavaFileObjectsFromPaths(javaFiles);
+
             JavacTask task = (JavacTask) compiler.getTask(
                     null,
                     fileManager,
                     null,
-                    List.of("-proc:none"),
+                    List.of("-proc:none"), // Disable annotation processing
                     null,
                     fileObjects
             );
-            Iterable<? extends CompilationUnitTree> compilationUnits = task.parse();
+
+            final Iterable<? extends CompilationUnitTree> compilationUnits;
+            try {
+                compilationUnits = task.parse();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to parse Java sources under " + sourceRoot.toAbsolutePath(), e);
+            }
+
             DocTrees docTrees = DocTrees.instance(task);
 
             for (CompilationUnitTree unit : compilationUnits) {
@@ -71,6 +92,8 @@ public class JavaSourceScanner implements Scanner {
                 new ScannerVisitor(config, filters, docTrees, packageName, sourceFile, elements, docComments)
                         .scan(unit, null);
             }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to scan Java sources under %s".formatted(sourceRoot.toAbsolutePath()), e);
         }
 
         return new ScanContext(config, elements, docComments);
@@ -78,7 +101,11 @@ public class JavaSourceScanner implements Scanner {
 
     private static List<Path> listJavaFiles(Path sourceRoot) throws IOException {
         try (Stream<Path> paths = Files.walk(sourceRoot)) {
-            return paths.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".java")).collect(Collectors.toList());
+            return paths
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .sorted()
+                    .collect(toList());
         }
     }
 
@@ -125,6 +152,7 @@ public class JavaSourceScanner implements Scanner {
             case INTERFACE -> INTERFACE;
             case ENUM -> ENUM;
             case ANNOTATION_TYPE -> ANNOTATION;
+            case RECORD -> RECORD;
             default -> CLASS;
         };
     }
@@ -330,7 +358,7 @@ public class JavaSourceScanner implements Scanner {
             if (patterns == null || patterns.isEmpty()) {
                 return List.of();
             }
-            return patterns.stream().map(Pattern::compile).collect(Collectors.toList());
+            return patterns.stream().map(Pattern::compile).collect(toList());
         }
     }
 

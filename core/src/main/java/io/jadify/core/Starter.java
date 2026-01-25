@@ -13,7 +13,7 @@ import java.util.List;
 public class Starter {
 
     public static void main(String[] args) throws Exception {
-        Path projectRoot = args.length > 0 ? Path.of(args[0]) : Path.of("demo-sample");
+        Path projectRoot = args.length > 0 ? Path.of(args[0]) : Path.of("core");
         Path configFile = args.length > 1 ? Path.of(args[1]) : null;
 
         var config = ConfigLoader.load(configFile);

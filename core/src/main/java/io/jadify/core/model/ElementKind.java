@@ -6,5 +6,6 @@ public enum ElementKind {
     ENUM,
     ANNOTATION,
     METHOD,
-    CONSTRUCTOR
+    CONSTRUCTOR,
+    RECORD
 }
